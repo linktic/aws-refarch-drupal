@@ -1,4 +1,4 @@
-  ---
+---
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: Reference Architecture to host Drupal on AWS - Creates Drupal web Auto Scaling group
@@ -14,10 +14,10 @@ Metadata:
         - WebInstanceType
         - WebAsgMax
         - WebAsgMin
-        - PublicAlbSecurityGroup
-        - PublicSubnet0
-        - PublicSubnet1
-        - PublicSubnet2
+        - WebSecurityGroup
+        - WebSubnet0
+        - WebSubnet1
+        - WebSubnet2
         - PublicAlbTargetGroupArn
         - PublicAlbHostname
         - SslCertificate
@@ -67,14 +67,14 @@ Metadata:
         default: Web ASG Min
       WebInstanceType:
         default: Web Instance Type
-      PublicAlbSecurityGroup:
+      WebSecurityGroup:
         default: Web Security Group
-      PublicSubnet0:
-        default: Public Subnet for AZ 0
-      PublicSubnet1:
-        default: Public Subnet for AZ 1
-      PublicSubnet2:
-        default: Public Subnet for AZ 2
+      WebSubnet0:
+        default: Web Subnet for AZ 0
+      WebSubnet1:
+        default: Web Subnet for AZ 1
+      WebSubnet2:
+        default: Web Subnet for AZ 2
       AdminEmail:
         default: Admin Email
       AdminPassword:
@@ -140,13 +140,13 @@ Parameters:
   WebAsgMax:
     AllowedPattern: ^((?!0$)[1-2]?[0-9]|30)$
     ConstraintDescription: Must be a number between 1 and 30.
-    Default: 1
+    Default: 4
     Description: Specifies the maximum number of EC2 instances in the Web Autoscaling Group.
     Type: String
   WebAsgMin:
     AllowedPattern: ^([0-0]?[0-9]|10)$
     ConstraintDescription: Must be a number between 0 and 10.
-    Default: 1
+    Default: 2
     Description: Specifies the minimum number of EC2 instances in the Web Autoscaling Group.
     Type: String
   WebInstanceType:
@@ -173,17 +173,17 @@ Parameters:
     Default: t2.large
     Description: The Amazon EC2 instance type for your web instances.
     Type: String
-  PublicAlbSecurityGroup:
-    Description: Select the Public Alb security group.
+  WebSecurityGroup:
+    Description: Select the web security group.
     Type: AWS::EC2::SecurityGroup::Id
-  PublicSubnet0:
-    Description: Select an existing Public subnet for AZ 0.
+  WebSubnet0:
+    Description: Select an existing web subnet for AZ 0.
     Type: AWS::EC2::Subnet::Id
-  PublicSubnet1:
-    Description: Select an existing Public subnet for AZ 1.
+  WebSubnet1:
+    Description: Select an existing web subnet for AZ 1.
     Type: AWS::EC2::Subnet::Id 
-  PublicSubnet2:
-    Description: Select an existing Public subnet for AZ 2.
+  WebSubnet2:
+    Description: Select an existing web subnet for AZ 2.
     Type: AWS::EC2::Subnet::Id
   AdminEmail:
     AllowedPattern: ^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$
@@ -317,8 +317,8 @@ Resources:
       VPCZoneIdentifier:
         !If [
           MoreThan2AZ,
-          [ !Ref PublicSubnet0, !Ref PublicSubnet1, !Ref PublicSubnet2 ],
-          [ !Ref PublicSubnet0, !Ref PublicSubnet1 ]
+          [ !Ref WebSubnet0, !Ref WebSubnet1, !Ref WebSubnet2 ],
+          [ !Ref WebSubnet0, !Ref WebSubnet1 ]
         ]
     CreationPolicy:
       ResourceSignal:
@@ -478,7 +478,7 @@ Resources:
       InstanceType: !Ref WebInstanceType
       KeyName: !Ref KeyName
       SecurityGroups:
-      - !Ref PublicAlbSecurityGroup
+      - !Ref WebSecurityGroup
       UserData:
         "Fn::Base64":
           !Sub |

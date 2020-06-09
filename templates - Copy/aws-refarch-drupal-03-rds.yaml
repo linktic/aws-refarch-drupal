@@ -125,7 +125,19 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '', [ 'Drupal / ', !Ref 'AWS::StackName' ] ]
- 
+  DatabaseInstance1:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Delete
+    Properties:
+      AllowMajorVersionUpgrade: false
+      AutoMinorVersionUpgrade: true
+      DBClusterIdentifier: !Ref DatabaseCluster
+      DBInstanceClass: !Ref DatabaseInstanceType
+      DBSubnetGroupName: !Ref DataSubnetGroup
+      Engine: aurora
+      Tags:
+        - Key: Name
+          Value: !Join [ '', [ 'Drupal / ', !Ref 'AWS::StackName' ] ]
   DataSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
@@ -147,6 +159,8 @@ Outputs:
     Value: !Ref DatabaseName
   DatabaseInstance0:
     Value: !Ref DatabaseInstance0
+  DatabaseInstance1:
+    Value: !Ref DatabaseInstance1
   DataSubnetGroup:
     Value: !Ref DataSubnetGroup
   DatabaseClusterEndpointAddress:
