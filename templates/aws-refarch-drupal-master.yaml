@@ -19,8 +19,6 @@ Metadata:
         - DatabaseMasterUsername
         - DatabaseMasterPassword
         - DatabaseName
-        - UseElastiCacheBoolean
-        - ElastiCacheNodeType
     - Label:
         default: Web Tier Parameters
       Parameters:
@@ -52,16 +50,13 @@ Metadata:
         default: DB Master Password
       DatabaseName:
         default: DB Name
-      ElastiCacheNodeType:
-        default: Cache Cluster Node Type
       PublicAlbAcmCertificate:
         default: ALB Certificate ARN
       KeyName:
         default: Existing Key Pair
       SshAccessCidr:
         default: SSH Access From
-      UseElastiCacheBoolean:
-        default: Use a Cache Cluster?
+  
       UseCloudFrontBoolean:
         default: Use a CDN (CloudFront)?
       UseRoute53Boolean:
@@ -125,29 +120,7 @@ Parameters:
     AllowedPattern: ^([a-zA-Z0-9]*)$
     Description: The Amazon RDS master database name.
     Type: String
-  ElastiCacheNodeType:
-    AllowedValues:
-      - cache.t2.micro
-      - cache.t2.small
-      - cache.t2.medium
-      - cache.m4.large
-      - cache.m4.xlarge
-      - cache.m4.2xlarge
-      - cache.m4.4xlarge
-      - cache.m4.10xlarge
-      - cache.m3.medium
-      - cache.m3.large
-      - cache.m3.xlarge
-      - cache.m3.2xlarge
-      - cache.r3.large
-      - cache.r3.xlarge
-      - cache.r3.2xlarge
-      - cache.r3.4xlarge
-      - cache.r3.8xlarge
-    ConstraintDescription: Must be a valid Amazon ElastiCache node type.
-    Default: cache.t2.medium
-    Description: The Amazon ElastiCache cluster node type.
-    Type: String
+
   KeyName:
     AllowedPattern: ^([a-zA-Z0-9 @.`~!#$%^&*()_+,\\-])*$
     ConstraintDescription: Must be letters (upper or lower), numbers, and special characters.
@@ -169,13 +142,7 @@ Parameters:
     Default: True
     Description: Specifies whether a CloudFront Distribution should be created to serve the Drupal website content.
     Type: String
-  UseElastiCacheBoolean:
-    AllowedValues:
-      - True
-      - False
-    Default: True
-    Description: Specifies whether an ElastiCache Cache Cluster should be created to cache Drupal database content.
-    Type: String
+  
   UseRoute53Boolean:
     AllowedValues:
       - True
@@ -265,28 +232,7 @@ Conditions:
     !Equals [ True, !Ref UseRoute53Boolean ]
   DeployCloudFront:
     !Equals [ True, !Ref UseCloudFrontBoolean ]
-  DeployElastiCache:
-    !Equals [ True, !Ref UseElastiCacheBoolean ]
-
 Resources:
-
-  bastion:
-    Condition: AvailableAWSRegion
-    DependsOn: [ newvpc, securitygroups ]
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      Parameters:
-        BastionSecurityGroup:
-          !GetAtt [ securitygroups, Outputs.BastionSecurityGroup ]
-        KeyName:
-          !Ref KeyName
-        PublicSubnet0:
-          !GetAtt [ newvpc, Outputs.PublicSubnet0 ]
-        PublicSubnet1:
-          !GetAtt [ newvpc, Outputs.PublicSubnet1 ]
-        PublicSubnet2:
-          !GetAtt [ newvpc, Outputs.PublicSubnet2 ]
-      TemplateURL: https://s3.amazonaws.com/aws-refarch/drupal/latest/templates/aws-refarch-drupal-03-bastion.yaml
   cloudfront:
     Condition: AvailableAWSRegion
     Condition: DeployCloudFront
@@ -300,7 +246,7 @@ Resources:
           !GetAtt [ publicalb, Outputs.PublicAlbDnsName ]
         DomainName:
           !Ref DomainName
-      TemplateURL: https://s3.amazonaws.com/aws-refarch/drupal/latest/templates/aws-refarch-drupal-04-cloudfront.yaml
+      TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-04-cloudfront.yaml
   efs:
     Condition: AvailableAWSRegion
     DependsOn: [ newvpc, securitygroups ]
@@ -315,31 +261,11 @@ Resources:
           !GetAtt [ newvpc, Outputs.DataSubnet1 ]
         DataSubnet2:
           !GetAtt [ newvpc, Outputs.DataSubnet2 ]
-      TemplateURL: https://s3.amazonaws.com/aws-refarch/drupal/latest/templates/aws-refarch-drupal-03-efs.yaml
-  elasticache:
-    Condition: AvailableAWSRegion
-    Condition: DeployElastiCache
-    DependsOn: [ newvpc, securitygroups ]
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      Parameters:
-        DataSubnet0:
-          !GetAtt [ newvpc, Outputs.DataSubnet0 ]
-        DataSubnet1:
-          !GetAtt [ newvpc, Outputs.DataSubnet1 ]
-        DataSubnet2:
-          !GetAtt [ newvpc, Outputs.DataSubnet2 ]
-        ElastiCacheClusterName:
-          !Ref DatabaseName
-        ElastiCacheNodeType:
-          !Ref ElastiCacheNodeType
-        ElastiCacheSecurityGroup:
-          !GetAtt [ securitygroups, Outputs.ElastiCacheSecurityGroup ]
-      TemplateURL: https://s3.amazonaws.com/aws-refarch/drupal/latest/templates/aws-refarch-drupal-03-elasticache.yaml
+      TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-03-efs.yaml
   newvpc:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/aws-refarch/drupal/latest/templates/aws-refarch-drupal-01-newvpc.yaml
+      TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-01-newvpc.yaml
   publicalb:
     Condition: AvailableAWSRegion
     DependsOn: [ newvpc, securitygroups ]
@@ -358,7 +284,7 @@ Resources:
           !GetAtt [ securitygroups, Outputs.PublicAlbSecurityGroup ]
         Vpc:
           !GetAtt [ newvpc, Outputs.Vpc ]
-      TemplateURL: https://s3.amazonaws.com/aws-refarch/drupal/latest/templates/aws-refarch-drupal-03-publicalb.yaml
+      TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-03-publicalb.yaml
   rds:
     Condition: AvailableAWSRegion
     DependsOn: [ newvpc, securitygroups ]
@@ -381,7 +307,7 @@ Resources:
           !GetAtt [ newvpc, Outputs.DataSubnet1 ]
         DataSubnet2:
           !GetAtt [ newvpc, Outputs.DataSubnet2 ]
-      TemplateURL: https://s3.amazonaws.com/aws-refarch/drupal/latest/templates/aws-refarch-drupal-03-rds.yaml
+      TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-03-rds.yaml
   route53:
     Condition: AvailableAWSRegion
     Condition: CreateRecordSet
@@ -395,7 +321,8 @@ Resources:
           !If [ DeployCloudFront, 'Z2FDTNDATAQYW2', !GetAtt [ publicalb, Outputs.PublicAlbCanonicalHostedZoneId ] ]
         DomainName:
           !Ref DomainName
-      TemplateURL: https://s3.amazonaws.com/aws-refarch/drupal/latest/templates/aws-refarch-drupal-05-route53.yaml
+      TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-05-route53.yaml
+
   securitygroups:
     Condition: AvailableAWSRegion
     DependsOn: newvpc
@@ -406,7 +333,8 @@ Resources:
           !Ref SshAccessCidr
         Vpc:
           !GetAtt [ newvpc, Outputs.Vpc ]
-      TemplateURL: https://s3.amazonaws.com/aws-refarch/drupal/latest/templates/aws-refarch-drupal-02-securitygroups.yaml
+      TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-02-securitygroups.yaml
+
   web:
     Condition: AvailableAWSRegion
     DependsOn: [ efs, newvpc, publicalb, securitygroups ]
@@ -437,14 +365,14 @@ Resources:
           !Ref WebAsgMin
         WebInstanceType:
           !Ref WebInstanceType
-        WebSecurityGroup:
-          !GetAtt [ securitygroups, Outputs.WebSecurityGroup ]
-        WebSubnet0:
-          !GetAtt [ newvpc, Outputs.WebSubnet0 ]
-        WebSubnet1:
-          !GetAtt [ newvpc, Outputs.WebSubnet1 ]
-        WebSubnet2:
-          !GetAtt [ newvpc, Outputs.WebSubnet2 ]
+        PublicSecurityGroup:
+          !GetAtt [ securitygroups, Outputs.PublicSecurityGroup ]
+        PublicSubnet0:
+          !GetAtt [ newvpc, Outputs.PublicSubnet0 ]
+        PublicSubnet1:
+          !GetAtt [ newvpc, Outputs.PublicSubnet1 ]
+        PublicSubnet2:
+          !GetAtt [ newvpc, Outputs.PublicSubnet2 ]
         AdminEmail:
           !Ref AdminEmail
         AdminPassword:
@@ -459,7 +387,7 @@ Resources:
           !Ref Locale
         Title:
           !Ref Title
-      TemplateURL: https://s3.amazonaws.com/aws-refarch/drupal/latest/templates/aws-refarch-drupal-04-web.yaml
+      TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-04-web.yaml
 
 Outputs:
 

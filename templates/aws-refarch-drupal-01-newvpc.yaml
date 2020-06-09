@@ -79,22 +79,6 @@ Resources:
         - Key: SubnetType
           Value: Private
       VpcId: !Ref Vpc
-  WebSubnetRouteTableAssociation0:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref NatRouteTable0
-      SubnetId: !Ref WebSubnet0
-  WebSubnetRouteTableAssociation1:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref NatRouteTable1
-      SubnetId: !Ref WebSubnet1
-  WebSubnetRouteTableAssociation2:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: MoreThan2AZ
-    Properties:
-      RouteTableId: !Ref NatRouteTable2
-      SubnetId: !Ref WebSubnet2
   AttachInternetGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -138,23 +122,6 @@ Resources:
         - Key: SubnetType
           Value: Private
       VpcId: !Ref Vpc
-  DataSubnetRouteTableAssociation0:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref NatRouteTable0
-      SubnetId: !Ref DataSubnet0
-  DataSubnetRouteTableAssociation1:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref NatRouteTable1
-      SubnetId: !Ref DataSubnet1
-  DataSubnetRouteTableAssociation2:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: MoreThan2AZ
-    Properties:
-      RouteTableId: !Ref NatRouteTable2
-      SubnetId: !Ref DataSubnet2
-
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:

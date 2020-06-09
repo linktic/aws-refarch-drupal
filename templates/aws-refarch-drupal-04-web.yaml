@@ -1,10 +1,9 @@
-  ---
+---
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: Reference Architecture to host Drupal on AWS - Creates Drupal web Auto Scaling group
 
 Metadata:
-
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
@@ -14,7 +13,7 @@ Metadata:
         - WebInstanceType
         - WebAsgMax
         - WebAsgMin
-        - PublicAlbSecurityGroup
+        - PublicSecurityGroup
         - PublicSubnet0
         - PublicSubnet1
         - PublicSubnet2
@@ -67,8 +66,8 @@ Metadata:
         default: Web ASG Min
       WebInstanceType:
         default: Web Instance Type
-      PublicAlbSecurityGroup:
-        default: Web Security Group
+      PublicSecurityGroup:
+        default: Public Security Group
       PublicSubnet0:
         default: Public Subnet for AZ 0
       PublicSubnet1:
@@ -173,8 +172,8 @@ Parameters:
     Default: t2.large
     Description: The Amazon EC2 instance type for your web instances.
     Type: String
-  PublicAlbSecurityGroup:
-    Description: Select the Public Alb security group.
+  PublicSecurityGroup:
+    Description: Select the Public security group.
     Type: AWS::EC2::SecurityGroup::Id
   PublicSubnet0:
     Description: Select an existing Public subnet for AZ 0.
@@ -478,7 +477,7 @@ Resources:
       InstanceType: !Ref WebInstanceType
       KeyName: !Ref KeyName
       SecurityGroups:
-      - !Ref PublicAlbSecurityGroup
+      - !Ref PublicSecurityGroup
       UserData:
         "Fn::Base64":
           !Sub |
