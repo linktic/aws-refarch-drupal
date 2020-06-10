@@ -129,7 +129,7 @@ Resources:
     Properties:
       DistributionConfig:
         Aliases:
-        - !If [ DomainName, !Join [ '', [ '*.', !Ref DomainName ] ], !Ref 'AWS::NoValue' ]
+        - !If [ DomainName, !Ref DomainName, !Ref 'AWS::NoValue' ]
         CacheBehaviors:
         - PathPattern: wp-includes/*
           AllowedMethods:

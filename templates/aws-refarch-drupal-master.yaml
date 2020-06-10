@@ -308,20 +308,20 @@ Resources:
         DataSubnet2:
           !GetAtt [ newvpc, Outputs.DataSubnet2 ]
       TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-03-rds.yaml
-  route53:
-    Condition: AvailableAWSRegion
-    Condition: CreateRecordSet
-    DependsOn: [ publicalb, web ]
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      Parameters:
-        DnsEndpoint:
-          !If [ DeployCloudFront, !GetAtt [ cloudfront, Outputs.DnsEndpoint ], !GetAtt [ publicalb, Outputs.PublicAlbDnsName ] ]
-        DnsHostId:
-          !If [ DeployCloudFront, 'Z2FDTNDATAQYW2', !GetAtt [ publicalb, Outputs.PublicAlbCanonicalHostedZoneId ] ]
-        DomainName:
-          !Ref DomainName
-      TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-05-route53.yaml
+  #route53:
+  #  Condition: AvailableAWSRegion
+  #  Condition: CreateRecordSet
+  #  DependsOn: [ publicalb, web ]
+  #  Type: AWS::CloudFormation::Stack
+  #  Properties:
+  #    Parameters:
+  #      DnsEndpoint:
+  #        !If [ DeployCloudFront, !GetAtt [ cloudfront, Outputs.DnsEndpoint ], !GetAtt [ publicalb, Outputs.PublicAlbDnsName ] ]
+  #      DnsHostId:
+  #        !If [ DeployCloudFront, 'Z2FDTNDATAQYW2', !GetAtt [ publicalb, Outputs.PublicAlbCanonicalHostedZoneId ] ]
+  #      DomainName:
+  #        !Ref DomainName
+  #    TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-05-route53.yaml
 
   securitygroups:
     Condition: AvailableAWSRegion
