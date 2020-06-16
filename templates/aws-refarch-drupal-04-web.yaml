@@ -21,16 +21,6 @@ Metadata:
         - PublicAlbHostname
         - SslCertificate
     - Label:
-        default: Drupal Parameters
-      Parameters:
-        - Title
-        - DomainName
-        - Directory
-        - AdminUsername
-        - AdminPassword
-        - AdminEmail
-        - Locale
-    - Label:
         default: Database Parameters
       Parameters:
         - DatabaseClusterEndpointAddress
@@ -74,20 +64,6 @@ Metadata:
         default: Public Subnet for AZ 1
       PublicSubnet2:
         default: Public Subnet for AZ 2
-      AdminEmail:
-        default: Admin Email
-      AdminPassword:
-        default: Admin Password
-      AdminUsername:
-        default: Admin Username
-      Directory:
-        default: Site Directory
-      DomainName:
-        default: Site Domain
-      Locale:
-        default: Language Code
-      Title:
-        default: Site Title
 
 Parameters:
 
@@ -150,10 +126,10 @@ Parameters:
     Type: String
   WebInstanceType:
     AllowedValues:
-      - t2.micro
-      - t2.small
-      - t2.medium
-      - t2.large
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - t3.large
       - m4.large
       - m4.xlarge
       - m4.2xlarge
@@ -169,7 +145,7 @@ Parameters:
       - r3.4xlarge
       - r3.8xlarge
     ConstraintDescription: Must be a valid Amazon EC2 instance type.
-    Default: t2.large
+    Default: t3.medium
     Description: The Amazon EC2 instance type for your web instances.
     Type: String
   PublicSecurityGroup:
@@ -184,36 +160,7 @@ Parameters:
   PublicSubnet2:
     Description: Select an existing Public subnet for AZ 2.
     Type: AWS::EC2::Subnet::Id
-  AdminEmail:
-    AllowedPattern: ^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$
-    Description: The Drupal admin email address.
-    Type: String
-  AdminPassword:
-    AllowedPattern: ^([a-zA-Z0-9`~!#$%^&*()_+,\\-])*$
-    ConstraintDescription: Must be letters (upper or lower), numbers, and these special characters '_'`~!#$%^&*()_+,-   
-    Description: The Drupal admin password.
-    Type: String
-    NoEcho: true
-  AdminUsername:
-    AllowedPattern: ^([a-zA-Z0-9])([a-zA-Z0-9_-])*([a-zA-Z0-9])$
-    Description: The Drupal admin username.
-    Type: String
-  Directory:
-    AllowedPattern: ^([a-zA-Z0-9])([a-zA-Z0-9_-])*([a-zA-Z0-9])$
-    Description: The Drupal site directory.
-    Type: String
-  DomainName:
-    AllowedPattern: ^$|(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$
-    Description: '[ Optional ] The main domain name of the Drupal site (e.g. example.com). Leave empty to use the ALB DNS name for the Drupal site.'
-    Type: String
-  Locale:
-    Description: The main language of the Drupal site, as per https://codex.Drupal.org/Installing_Drupal_in_Your_Language. The default is 'en_GB'.
-    Type: String
-    Default: en_GB
-  Title:
-    AllowedPattern: ^([a-zA-Z0-9])([a-zA-Z0-9 _-]*)([a-zA-Z0-9])$
-    Description: The Drupal website title.
-    Type: String
+
 
 Conditions:
 
@@ -222,47 +169,19 @@ Conditions:
   MoreThan2AZ:
     !Or [
       !Equals [ !Ref 'AWS::Region', us-east-1 ],
-      !Equals [ !Ref 'AWS::Region', us-east-2 ],
-      !Equals [ !Ref 'AWS::Region', us-west-2 ],
-      !Equals [ !Ref 'AWS::Region', eu-west-1 ],
-      !Equals [ !Ref 'AWS::Region', sa-east-1 ],
-      !Equals [ !Ref 'AWS::Region', ap-northeast-1 ],
-      !Equals [ !Ref 'AWS::Region', ap-southeast-2 ]
+      !Equals [ !Ref 'AWS::Region', us-east-2 ]
     ]
-  NoDomainName:
-    !Equals [ '', !Ref DomainName ]
+  #NoDomainName:
+  #  !Equals [ '', !Ref DomainName ]
 
 Mappings:
 
   RegionMap:
-    ap-northeast-1:
-      AMI: ami-3bd3c45c
-    ap-northeast-2:
-      AMI: ami-e21cc38c
-    ap-south-1:
-      AMI: ami-47205e28
-    ap-southeast-1:
-      AMI: ami-77af2014
-    ap-southeast-2:
-      AMI: ami-10918173
-    ca-central-1:
-      AMI: ami-a7aa15c3
-    eu-central-1:
-      AMI: ami-82be18ed
-    eu-west-1:
-      AMI: ami-d7b9a2b1
-    eu-west-2:
-      AMI: ami-ed100689
-    sa-east-1:
-      AMI: ami-87dab1eb
     us-east-1:
-      AMI: ami-a4c7edb2
+      AMI: ami-07be5ba4cf7c53705
     us-east-2:
       AMI: ami-8a7859ef
-    us-west-1:
-      AMI: ami-327f5352
-    us-west-2:
-      AMI: ami-6df1e514
+
 
 Resources:
 
@@ -325,131 +244,6 @@ Resources:
         Timeout: PT20M
   WebLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
-    Metadata:
-      AWS::CloudFormation::Init:
-        configSets:
-          deploy_webserver:
-            - install_webserver
-            - build_cacheclient
-            - build_drupal
-            - build_opcache
-            - install_cacheclient
-            - install_drupal
-            - install_opcache
-            - start_webserver
-        install_webserver:
-          packages:
-            yum:
-              awslogs: []
-              httpd24: []
-              mysql56: []
-              php70: []
-              php70-mysqlnd: []
-              php70-gd: []
-          files:
-            /tmp/create_site_conf.sh:
-              content:
-                !Join [
-                  "",[
-                    "#!/bin/bash -xe\n",
-                    "if [ ! -f /etc/httpd/conf.d/", !Ref Directory, ".conf ]; then\n",                    
-                    "   touch /etc/httpd/conf.d/", !Ref Directory, ".conf\n",
-                    "   echo 'ServerName 127.0.0.1:80' >> /etc/httpd/conf.d/", !Ref Directory, ".conf\n",
-                    "   echo 'DocumentRoot /var/www/drupal/", !Ref Directory, "' >> /etc/httpd/conf.d/", !Ref Directory, ".conf\n",
-                    "   echo '<Directory /var/www/drupal/", !Ref Directory, ">' >> /etc/httpd/conf.d/", !Ref Directory, ".conf\n",
-                    "   echo '  Options Indexes FollowSymLinks' >> /etc/httpd/conf.d/", !Ref Directory, ".conf\n",
-                    "   echo '  AllowOverride All' >> /etc/httpd/conf.d/", !Ref Directory, ".conf\n",
-                    "   echo '  Require all granted' >> /etc/httpd/conf.d/", !Ref Directory, ".conf\n",
-                    "   echo '</Directory>' >> /etc/httpd/conf.d/", !Ref Directory, ".conf\n",
-                    "fi\n"
-                  ]
-                ]
-              mode: 000500
-              owner: root
-              group: root
-          commands:
-            create_site_conf:
-              command: ./create_site_conf.sh
-              cwd: /tmp
-              ignoreErrors: false
-        build_cacheclient:
-          packages:
-            yum:
-              gcc-c++: []  
-          files:
-            /tmp/install_opcache.sh:
-              content:
-                !Sub |
-                  #!/bin/bash -xe
-                  # create hidden opcache directory locally & change owner to apache
-                  if [ ! -d /var/www/.opcache ]; then                    
-                      mkdir -p /var/www/.opcache
-                  fi
-                  # enable opcache in /etc/php-7.0.d/10-opcache.ini
-                  sed -i 's/;opcache.file_cache=.*/opcache.file_cache=\/var\/www\/.opcache/' /etc/php-7.0.d/10-opcache.ini
-                  sed -i 's/opcache.memory_consumption=.*/opcache.memory_consumption=512/' /etc/php-7.0.d/10-opcache.ini
-                  # download opcache-instance.php to verify opcache status
-                  if [ ! -f /var/www/drupal/${Directory}/opcache-instanceid.php ]; then
-                      aws s3 cp 's3://aws-refarch/drupal/latest/bits/opcache-instanceid.php' /var/www/drupal/${Directory}/.
-                  fi
-              mode: 000500
-              owner: root
-              group: root
-        build_drupal:
-          files:
-            /tmp/install_drupal.sh:
-              content:
-                !Join [
-                  "",[
-                    "#!/bin/bash -xe\n",
-                    "\n",
-                    "# make site directory\n",
-                    "if [ ! -d /var/www/drupal/", !Ref Directory, " ]; then\n",                    
-                    "   mkdir -p /var/www/drupal/", !Ref Directory, "\n",
-                    "\n",
-                    "   cd /tmp\n",
-                    "   wget http://ftp.drupal.org/files/projects/drupal-8.3.5.tar.gz\n",
-                    "   cd /var/www/drupal/", !Ref Directory, "\n",
-                    "   tar --strip-components=1 -xvzf /tmp/drupal-8.3.5.tar.gz\n",
-                    "   # set permissions of drupal site directories\n", 
-                    "   chown -R apache:apache /var/www/drupal/", !Ref Directory, "\n",
-                    "   if [ ! -f /var/www/drupal/", !Ref Directory, "/opcache-instanceid.php ]; then\n",
-                    "     aws s3 cp 's3://aws-refarch/wordpress/latest/bits/opcache-instanceid.php' /var/www/drupal/", !Ref Directory, "/.\n",
-                    "   fi\n",
-                    "fi\n"
-                  ]
-                ]
-              mode: 000500
-              owner: root
-              group: root
-        install_drupal:
-          commands:
-            install_drupal:
-              command: ./install_drupal.sh
-              cwd: /tmp
-              ignoreErrors: false          
-        install_cacheclient:
-          commands:
-            install_cacheclient:
-              command: ./install_cacheclient.sh
-              cwd: /tmp
-              ignoreErrors: false
-        install_opcache:
-          commands:
-            install_opcache:
-              command: ./install_opcache.sh
-              cwd: /tmp
-              ignoreErrors: false
-        start_webserver:
-          services:
-            sysvinit:
-              httpd:
-                enabled: true
-                ensureRunning: true
-          commands:
-            start_webserver:
-              command: service httpd restart
-              ignoreErrors: false
     Properties:
       IamInstanceProfile: !Ref WebInstanceProfile
       ImageId: !FindInMap [ RegionMap, !Ref 'AWS::Region', AMI ]
@@ -458,17 +252,6 @@ Resources:
       KeyName: !Ref KeyName
       SecurityGroups:
       - !Ref PublicSecurityGroup
-      UserData:
-        "Fn::Base64":
-          !Sub |
-            #!/bin/bash -xe
-            yum update -y
-            mkdir -p /var/www/drupal
-            mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${ElasticFileSystem}.efs.${AWS::Region}.amazonaws.com:/ /var/www/drupal
-            /opt/aws/bin/cfn-init --configsets deploy_webserver --verbose --stack ${AWS::StackName} --resource WebLaunchConfiguration --region ${AWS::Region}
-            sleep 600
-            /opt/aws/bin/cfn-signal --exit-code $? --stack ${AWS::StackName} --resource WebAutoScalingGroup --region ${AWS::Region}
-            service httpd restart
 
 Outputs:
 

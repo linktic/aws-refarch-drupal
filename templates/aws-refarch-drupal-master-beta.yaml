@@ -22,17 +22,20 @@ Metadata:
     - Label:
         default: Web Tier Parameters
       Parameters:
-      #  - UseRoute53Boolean
-      #  - UseCloudFrontBoolean
-      #  - CloudFrontAcmCertificate
+        - UseRoute53Boolean
+        - UseCloudFrontBoolean
+        - CloudFrontAcmCertificate
         - PublicAlbAcmCertificate
         - WebInstanceType
         - WebAsgMax
         - WebAsgMin
-
+    - Label:
+        default: Drupal Parameters
+      Parameters:
+        - DomainName
     ParameterLabels:
-      #CloudFrontAcmCertificate:
-      #  default: CloudFront Certificate ARN
+      CloudFrontAcmCertificate:
+        default: CloudFront Certificate ARN
       DatabaseInstanceType:
         default: DB Instance Class
       DatabaseMasterUsername:
@@ -48,24 +51,25 @@ Metadata:
       SshAccessCidr:
         default: SSH Access From
   
-      #UseCloudFrontBoolean:
-      #  default: Use a CDN (CloudFront)?
-      #UseRoute53Boolean:
-      #  default: Create record set (Route53)?
+      UseCloudFrontBoolean:
+        default: Use a CDN (CloudFront)?
+      UseRoute53Boolean:
+        default: Create record set (Route53)?
       WebAsgMax:
         default: Web ASG Max
       WebAsgMin:
         default: Web ASG Min
       WebInstanceType:
         default: Web Tier Instance Type
-    
+      DomainName:
+        default: Site Domain
 
 Parameters:
 
-  #CloudFrontAcmCertificate:
-  #  AllowedPattern: ^$|(arn:aws:acm:)([a-z0-9/:-])*([a-z0-9])$
-  #  Description: '[ Optional ] The AWS Certification Manager certificate ARN for the CloudFront distribution certificate - this certificate should be created in the us-east-1 (N. Virginia) region and must reference the Drupal domain name you use below.'
-  #  Type: String
+  CloudFrontAcmCertificate:
+    AllowedPattern: ^$|(arn:aws:acm:)([a-z0-9/:-])*([a-z0-9])$
+    Description: '[ Optional ] The AWS Certification Manager certificate ARN for the CloudFront distribution certificate - this certificate should be created in the us-east-1 (N. Virginia) region and must reference the Drupal domain name you use below.'
+    Type: String
   DatabaseInstanceType:
     AllowedValues:
       - db.t2.small
@@ -113,21 +117,21 @@ Parameters:
     Description: The CIDR IP range that is permitted to SSH to bastion instance. Note - a value of 0.0.0.0/0 will allow access from ANY IP address.
     Type: String
     Default: 0.0.0.0/0
-  #UseCloudFrontBoolean:
-  #  AllowedValues:
-  #    - True
-  #    - False
-  #  Default: True
-  #  Description: Specifies whether a CloudFront Distribution should be created to serve the Drupal website content.
-  #  Type: String
+  UseCloudFrontBoolean:
+    AllowedValues:
+      - True
+      - False
+    Default: True
+    Description: Specifies whether a CloudFront Distribution should be created to serve the Drupal website content.
+    Type: String
   
-  #UseRoute53Boolean:
-  #  AllowedValues:
-  #    - True
-  #    - False
-  #  Default: True
-  #  Description: Specifies whether a record set should be created in Route 53 for your Drupal domain name.
-  #  Type: String
+  UseRoute53Boolean:
+    AllowedValues:
+      - True
+      - False
+    Default: True
+    Description: Specifies whether a record set should be created in Route 53 for your Drupal domain name.
+    Type: String
   WebAsgMax:
     AllowedPattern: ^((?!0$)[1-2]?[0-9]|30)$
     ConstraintDescription: Must be a number between 1 and 30.
@@ -164,6 +168,10 @@ Parameters:
     Default: t3.medium
     Description: The Amazon EC2 instance type for your web instances.
     Type: String
+  DomainName:
+    AllowedPattern: ^$|(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$
+    Description: '[ Optional ] The main domain name of the Drupal site (e.g. example.com).'
+    Type: String
 
 Conditions:
 
@@ -172,25 +180,25 @@ Conditions:
       !Equals [ !Ref 'AWS::Region', us-east-1 ],
       !Equals [ !Ref 'AWS::Region', us-east-2 ]
     ]
-  #CreateRecordSet:
-  #  !Equals [ True, !Ref UseRoute53Boolean ]
-  #DeployCloudFront:
-  #  !Equals [ True, !Ref UseCloudFrontBoolean ]
+  CreateRecordSet:
+    !Equals [ True, !Ref UseRoute53Boolean ]
+  DeployCloudFront:
+    !Equals [ True, !Ref UseCloudFrontBoolean ]
 Resources:
-  #cloudfront:
-  #  Condition: AvailableAWSRegion
-  #  Condition: DeployCloudFront
-  #  DependsOn: [ publicalb, web ]
-  #  Type: AWS::CloudFormation::Stack
-  #  Properties:
-  #    Parameters:
-  #      CloudFrontAcmCertificate:
-  #        !Ref CloudFrontAcmCertificate
-  #      PublicAlbDnsName:
-  #        !GetAtt [ publicalb, Outputs.PublicAlbDnsName ]
-  #      DomainName:
-  #        !Ref DomainName
-  #    TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-04-cloudfront.yaml
+  cloudfront:
+    Condition: AvailableAWSRegion
+    Condition: DeployCloudFront
+    DependsOn: [ publicalb, web ]
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        CloudFrontAcmCertificate:
+          !Ref CloudFrontAcmCertificate
+        PublicAlbDnsName:
+          !GetAtt [ publicalb, Outputs.PublicAlbDnsName ]
+        DomainName:
+          !Ref DomainName
+      TemplateURL: https://12847125-stack-fac.s3.amazonaws.com/fac-stack/aws-refarch-drupal-04-cloudfront.yaml
   efs:
     Condition: AvailableAWSRegion
     DependsOn: [ newvpc, securitygroups ]
@@ -252,20 +260,20 @@ Resources:
         DataSubnet2:
           !GetAtt [ newvpc, Outputs.DataSubnet2 ]
       TemplateURL: https://12847125-stack-fac.s3.amazonaws.com/fac-stack/aws-refarch-drupal-03-rds.yaml
-  #route53:
-  #  Condition: AvailableAWSRegion
-  #  Condition: CreateRecordSet
-  #  DependsOn: [ publicalb, web ]
-  #  Type: AWS::CloudFormation::Stack
-  #  Properties:
-  #    Parameters:
-  #      DnsEndpoint:
-  #        !If [ DeployCloudFront, !GetAtt [ cloudfront, Outputs.DnsEndpoint ], !GetAtt [ publicalb, Outputs.PublicAlbDnsName ] ]
-  #      DnsHostId:
-  #        !If [ DeployCloudFront, 'Z2FDTNDATAQYW2', !GetAtt [ publicalb, Outputs.PublicAlbCanonicalHostedZoneId ] ]
-  #      DomainName:
-  #        !Ref DomainName
-  #    TemplateURL: https://linkticbackup1.s3.amazonaws.com/aws-drupal/aws-refarch-drupal-05-route53.yaml
+  route53:
+    Condition: AvailableAWSRegion
+    Condition: CreateRecordSet
+    DependsOn: [ publicalb, web ]
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        DnsEndpoint:
+          !If [ DeployCloudFront, !GetAtt [ cloudfront, Outputs.DnsEndpoint ], !GetAtt [ publicalb, Outputs.PublicAlbDnsName ] ]
+        DnsHostId:
+          !If [ DeployCloudFront, 'Z2FDTNDATAQYW2', !GetAtt [ publicalb, Outputs.PublicAlbCanonicalHostedZoneId ] ]
+        DomainName:
+          !Ref DomainName
+      TemplateURL: https://12847125-stack-fac.s3.amazonaws.com/fac-stack/aws-refarch-drupal-05-route53.yaml
 
   securitygroups:
     Condition: AvailableAWSRegion
@@ -324,9 +332,9 @@ Outputs:
   StackStatus:
     Description: Master Stack Status
     Value: !If [ AvailableAWSRegion, !Join [ '', [ 'Stack created in an available region: ', !Ref 'AWS::Region' ] ], "!!ERROR!!! - Nothing to do! - unavailable AWS Region. You must create this stack in an available AWS Region: 'us-east-1', 'us-east-2', 'us-west-2', 'eu-west-1', 'ap-southeast-2'." ]
-  #SiteUrl:
-  #  Description: The URL of the Drupal site
-  #  Value: !Join [ '', [ !If [ CreateRecordSet, !Join [ '', [ 'http://www.', !Ref DomainName ] ], !If [ DeployCloudFront, !GetAtt [ cloudfront, Outputs.DnsHostname ], !GetAtt [ publicalb, Outputs.PublicAlbHostname ] ] ], '/drupal' ] ]
+  SiteUrl:
+    Description: The URL of the Drupal site
+    Value: !Join [ '', [ !If [ CreateRecordSet, !Join [ '', [ 'http://www.', !Ref DomainName ] ], !If [ DeployCloudFront, !GetAtt [ cloudfront, Outputs.DnsHostname ], !GetAtt [ publicalb, Outputs.PublicAlbHostname ] ] ], '/drupal' ] ]
   #OpCacheValidationUrl:
   #  Description: A page to validate OpCache has been enabled for each instance in the ASG. Refresh the page to see the status of each instance in the ASG.
   #  Value: !Join [ '', [ !If [ CreateRecordSet, !Join [ '', [ 'http://www.', !Ref DomainName ] ], !If [ DeployCloudFront, !GetAtt [ cloudfront, Outputs.DnsHostname ], !GetAtt [ publicalb, Outputs.PublicAlbHostname ] ] ], '/opcache-instanceid.php' ] ]

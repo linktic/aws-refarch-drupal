@@ -41,7 +41,7 @@ Resources:
   RecordSet:
     Type: AWS::Route53::RecordSetGroup
     Properties:
-      HostedZoneName: !Join ['', [!Ref DomainName, '.']]
+      HostedZoneName: 'fac.mil.co.' #!Join ['', [!Ref DomainName, '.']]
       RecordSets:
       - Name: !Join ['', ['www.', !Ref DomainName, '.']]
         Type: A
